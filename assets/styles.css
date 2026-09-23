@@ -224,6 +224,7 @@ main { padding: 0 0 56px; }
 .callhead .sub { font-family: var(--mono); font-size: 11.5px; color: #8fb0aa; margin-top: 2px; }
 
 .transcript { padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; height: 396px; overflow-y: auto; scroll-behavior: smooth; }
+.transcript:has(> div[style*='margin:auto']) { justify-content: center; }
 .transcript::-webkit-scrollbar { width: 7px; }
 .transcript::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 4px; }
 .bubble { max-width: 84%; padding: 10px 13px; border-radius: 13px; font-size: 14px; line-height: 1.55; animation: rise 0.26s ease; }

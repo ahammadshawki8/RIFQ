@@ -389,12 +389,25 @@ function renderCall() {
   const transcript = $('transcript');
 
   if (!s) {
-    transcript.innerHTML = '<div class="typing" style="padding:0">No call yet. Start one from the campaign gate.</div>';
+    $('recDot').hidden = true;
+    $('localeChip').hidden = true;
+    $('callWho').textContent = 'No call in progress';
+    $('callSub').textContent = 'Start one from the campaign gate';
+    transcript.innerHTML = `
+      <div style="margin:auto; text-align:center; max-width:34ch; color:#8fb0aa; font-size:13.5px">
+        The conversation appears here, with the English gloss under every Arabic or Urdu line.
+      </div>`;
+    const startBtn = el('button', 'btn sm', 'Choose someone to call');
+    startBtn.addEventListener('click', () => show('campaign'));
     $('replies').innerHTML = '';
-    $('flow').innerHTML = '';
-    $('toolList').innerHTML = '';
+    $('replies').appendChild(startBtn);
+    // Show the shape of the call even before it starts.
+    $('flow').innerHTML = FLOW.map((f, i) =>
+      `<div class="fstep"><span class="bullet">${i + 1}</span><div><div class="name">${f.name}</div><div class="what">${f.what}</div></div></div>`).join('');
+    $('toolList').innerHTML = CANONICAL_TOOLS.map((t) =>
+      `<li class="off"><span>${t}</span><span class="muted tiny">${TOOL_CAPTIONS[t]}</span></li>`).join('');
+    $('toolCount').textContent = `0 of ${CANONICAL_TOOLS.length}`;
     $('callBanners').innerHTML = '';
-    $('toolCount').textContent = '0 of 10';
     $('freeText').disabled = true;
     renderVoicePanel();
     renderTopbar();
@@ -533,6 +546,21 @@ function renderVoicePanel() {
       `<span>${esc(PACKS[r.locale].label)}</span><span class="chip ${cls}">${esc(r.label)}</span>`));
   }
   $('voiceEngineChip').textContent = voice.key ? 'ElevenLabs' : 'browser voices';
+
+  const sample = $('voiceSample');
+  sample.innerHTML = '';
+  for (const locale of ['en-AE', 'ar-AE', 'ur-AE']) {
+    const btn = el('button', 'btn ghost sm', `Hear ${PACKS[locale].short}`);
+    btn.addEventListener('click', () => {
+      voice.stop();
+      voice.speak(PACKS[locale].t.intro, locale, {
+        enText: PACKS['en-AE'].t.intro,
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
+    });
+    sample.appendChild(btn);
+  }
 
   const box = $('voiceConnect');
   box.innerHTML = '';
