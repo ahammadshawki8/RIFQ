@@ -2,3 +2,5 @@ node_modules/
 .playwright-mcp/
 .DS_Store
 *.log
+promo/out/
+promo/node_modules/
