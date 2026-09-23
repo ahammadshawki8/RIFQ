@@ -2,6 +2,10 @@
 
 Three minutes, one browser tab, no keys. Open https://ahammadshawki8.github.io/RIFQ/
 
+The guided walkthrough bar at the top follows these same scenes and ticks each step off as it happens, so you can present without memorising anything. Turn it off in the left rail for a clean screen recording, and use Reset demo to start again.
+
+If you have an ElevenLabs key, paste it into the voice panel on the call screen first. All three languages then speak through one multilingual model instead of the browser's own voices.
+
 ## Scene 1: the call that never happens (30 seconds)
 
 > "Before anything dials, the gate decides."
