@@ -4,117 +4,159 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RIFQ: governed voice for early arrears</title>
-<meta name="description" content="Prototype console for RIFQ, a governed early-arrears voice agent. Hardship stops collection, the context moves, and a named person owns the case." />
+<meta name="description" content="Working prototype of RIFQ. Hardship stops collection, contact is suppressed everywhere, a named person owns the case, and every sentence carries the policy that allowed it." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e2a27'/><g fill='%232f9d8b'><rect x='7' y='13' width='3' height='6' rx='1.5'/><rect x='12.5' y='9' width='3' height='14' rx='1.5'/><rect x='18' y='6' width='3' height='20' rx='1.5'/><rect x='23.5' y='11' width='3' height='10' rx='1.5' fill='%23d9b26f'/></g></svg>" />
+<link rel="stylesheet" href="assets/styles.css?v=2" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230c2623'/><g fill='%2335a894'><rect x='7' y='13' width='3' height='6' rx='1.5'/><rect x='12.5' y='9' width='3' height='14' rx='1.5'/><rect x='18' y='6' width='3' height='20' rx='1.5'/><rect x='23.5' y='11' width='3' height='10' rx='1.5' fill='%23d9b26f'/></g></svg>" />
 </head>
 <body>
 <div class="shell">
   <aside class="rail">
     <div>
-      <div class="brand">
-        <h1>RIFQ</h1><span class="arabic">رفق</span>
-      </div>
-      <div class="wave idle" id="railWave" aria-hidden="true"></div>
-      <p class="tagline">Governed voice for early arrears. Every call stays respectful, every action stays within policy, every decision remains human.</p>
+      <div class="brand"><h1>RIFQ</h1><span class="arabic">رفق</span></div>
+      <div class="wave" id="wave" aria-hidden="true"></div>
+      <p class="tagline">Governed voice for early arrears. Hardship stops collection, the context moves, and a named person owns the case.</p>
     </div>
 
     <nav id="nav" aria-label="Sections">
       <button class="navlink active" data-view="campaign"><span class="idx">01</span> Campaign gate</button>
-      <button class="navlink" data-view="call"><span class="idx">02</span> Live call</button>
-      <button class="navlink" data-view="app"><span class="idx">03</span> Customer app<span class="dot" id="appDot" hidden></span></button>
-      <button class="navlink" data-view="evidence"><span class="idx">04</span> Evidence</button>
+      <button class="navlink" data-view="call"><span class="idx">02</span> Live call<span class="flag" id="flagCall" hidden></span></button>
+      <button class="navlink" data-view="app"><span class="idx">03</span> Customer app<span class="flag" id="flagApp" hidden></span></button>
+      <button class="navlink" data-view="evidence"><span class="idx">04</span> Evidence<span class="flag" id="flagEvidence" hidden></span></button>
       <button class="navlink" data-view="tests"><span class="idx">05</span> Test results</button>
     </nav>
 
+    <div class="rail-card">
+      <div class="label" style="margin-bottom:8px">Demo controls</div>
+      <label class="switch" style="margin-bottom:7px"><span>Guided walkthrough</span><input type="checkbox" id="guideToggle" checked /></label>
+      <label class="switch"><span>Voice</span><input type="checkbox" id="voiceToggle" checked /></label>
+    </div>
+
     <div class="rail-foot">
-      <div id="policyChip" class="mono"></div>
-      Synthetic customers, test numbers, mock bank systems. No real customer data.<br />
-      <a href="https://github.com/ahammadshawki8/RIFQ" target="_blank" rel="noopener">Source on GitHub</a>
+      <div class="mono" id="policyChip"></div>
+      <div>Synthetic customers, reserved test numbers, mock bank systems. No real customer data.</div>
+      <a href="https://github.com/ahammadshawki8/RIFQ" target="_blank" rel="noopener">Source and tests on GitHub</a>
     </div>
   </aside>
 
   <main>
+    <div class="topbar">
+      <span class="chip mono" id="tbPolicy">policy</span>
+      <span class="sep"></span>
+      <span id="tbCall" class="small muted">No call in progress</span>
+      <span class="sep"></span>
+      <span class="chip grey mono" id="tbVoice">voice</span>
+      <span style="flex:1"></span>
+      <button class="btn ghost sm" id="resetBtn">Reset demo</button>
+    </div>
+
+    <div class="coach" id="coach" hidden>
+      <span class="step-n" id="coachStep">Step 1 of 8</span>
+      <div><strong id="coachTitle"></strong> <span class="hint" id="coachHint"></span></div>
+      <span class="spacer"></span>
+      <div class="dots" id="coachDots"></div>
+      <button class="btn sm" id="coachGo">Take me there</button>
+    </div>
+
     <!-- 01 CAMPAIGN -->
     <section class="view active" id="view-campaign">
       <div class="head">
-        <div class="kicker">Before the call</div>
-        <h2>The gate decides before anything dials.</h2>
-        <p>Consent, calling hours, attempt limits, opt-outs and open cases are checked first. A blocked call never reaches telephony, and the reason is written down. Move the clock and watch the decisions change.</p>
-      </div>
-
-      <div class="card pad" style="margin-bottom:16px">
-        <div class="clockbar">
-          <div>
-            <div class="kicker">Simulated clock</div>
-            <div class="clock-readout" id="clockReadout">11:00</div>
-          </div>
-          <input type="range" id="clock" min="0" max="23" value="11" aria-label="Hour of day in Dubai" />
-          <div class="small muted">Permitted window <strong id="windowLabel"></strong> Asia/Dubai</div>
+        <div>
+          <div class="eyebrow">01 Before the call</div>
+          <h2>The gate decides before anything dials.</h2>
+          <p>Eight checks run before a call is queued. A blocked call never reaches telephony, and the reason is written down rather than left to the dialer.</p>
         </div>
       </div>
 
-      <div class="queue" id="queue"></div>
-
-      <div class="card pad" style="margin-top:16px">
-        <div class="spread">
-          <div>
-            <h3 style="font-size:17px">Agency dialer</h3>
-            <p class="small muted" style="margin:4px 0 0">The outsourced agency works from an exported file. It must read the same suppression list before it dials, which is what stops the calls that kept arriving after a customer had already explained.</p>
-          </div>
-          <button class="btn ghost sm" id="agencyDial">Agency attempts to dial</button>
+      <div class="split">
+        <div>
+          <div class="queue" id="queue"></div>
+          <p class="footnote" id="queueNote"></p>
         </div>
-        <div id="agencyLog" style="margin-top:12px"></div>
+
+        <div class="stack sticky">
+          <div class="card pad raised">
+            <div class="spread"><div class="label">Simulated clock, Asia/Dubai</div></div>
+            <div class="clockrow" style="margin-top:10px">
+              <div class="spread">
+                <div class="clock-readout" id="clockReadout">11:00</div>
+                <span class="chip" id="windowChip"></span>
+              </div>
+              <input type="range" id="clock" min="0" max="23" value="11" aria-label="Hour of day in Dubai" />
+              <div class="gauge" id="gauge" aria-hidden="true"></div>
+              <div class="statline" style="margin-top:6px">
+                <div><b id="statAllowed">0</b><span class="label">callable now</span></div>
+                <div><b id="statBlocked">0</b><span class="label">blocked</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card pad">
+            <div class="spread">
+              <h3>Agency dialer</h3>
+              <button class="btn ghost sm" id="agencyDial">Attempt a dial</button>
+            </div>
+            <p class="small muted" style="margin:7px 0 0">The outsourced agency works from an exported file. It reads the same suppression list before dialling, which is the step that was missing when our interviewee kept getting calls after he had already explained.</p>
+            <div id="agencyLog" style="margin-top:10px"></div>
+          </div>
+
+          <div class="card pad">
+            <div class="label">What the gate checks</div>
+            <ul class="checks" id="gateLegend" style="grid-template-columns:1fr; margin-top:9px"></ul>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- 02 CALL -->
     <section class="view" id="view-call">
       <div class="head">
-        <div class="kicker">During the call</div>
-        <h2>One call, five locked steps.</h2>
-        <p>Pick a reply, or type your own. The workflow decides what the agent may say and which tools it holds at that moment.</p>
+        <div>
+          <div class="eyebrow">02 During the call</div>
+          <h2>Five locked steps, and a person one sentence away.</h2>
+          <p>Pick a reply or type your own. The workflow decides what may be said and which tools the agent holds at that moment.</p>
+        </div>
       </div>
 
-      <div class="grid cols-call">
-        <div class="callpanel">
+      <div class="split call">
+        <div class="callpanel" id="callPanel">
           <div class="callhead">
             <div>
               <div class="who" id="callWho">No call in progress</div>
               <div class="sub" id="callSub">Start one from the campaign gate</div>
             </div>
             <div class="row">
-              <span class="pill" id="localeChip" hidden></span>
-              <label class="switch" style="color:#93b3ac">
-                <input type="checkbox" id="voiceToggle" checked /> voice
-              </label>
+              <span class="chip mono" id="localeChip" hidden></span>
+              <span class="rec" id="recDot" hidden><i></i> REC <span id="callTimer">00:00</span></span>
             </div>
           </div>
-          <div class="transcript" id="transcript">
-            <div class="speaking muted" style="color:#7fa39c">The transcript appears here.</div>
+          <div class="transcript" id="transcript"></div>
+          <div id="typingRow"></div>
+          <div class="callfoot">
+            <div class="replies" id="replies"></div>
+            <form class="composer" id="composer" autocomplete="off">
+              <input id="freeText" placeholder="Type anything the customer might say" aria-label="Customer says" />
+              <button class="btn" type="submit">Send</button>
+            </form>
           </div>
-          <div id="speakingRow"></div>
-          <div class="replies" id="replies"></div>
-          <form class="composer" id="composer" autocomplete="off">
-            <input id="freeText" placeholder="Type anything the customer might say" aria-label="Customer says" />
-            <button class="btn" type="submit">Send</button>
-          </form>
         </div>
 
-        <div class="grid" style="align-content:start">
+        <div class="stack sticky">
           <div class="card pad">
-            <div class="kicker">Workflow node</div>
-            <div class="nodes" id="nodeChips" style="margin-top:8px"></div>
-            <div style="margin-top:14px" class="kicker">Tools unlocked right now</div>
-            <ul class="toollist" id="toolList" style="margin-top:8px"></ul>
+            <div class="label" style="margin-bottom:9px">Workflow</div>
+            <div class="flow" id="flow"></div>
           </div>
-          <div id="callBanners" class="grid"></div>
           <div class="card pad">
-            <div class="kicker">Verification</div>
-            <div id="verifyState" class="small muted" style="margin-top:6px">Not started.</div>
+            <div class="spread" style="margin-bottom:8px"><div class="label">Tools the agent holds now</div><span class="chip mono" id="toolCount"></span></div>
+            <ul class="toollist" id="toolList"></ul>
+          </div>
+          <div class="stack" id="callBanners"></div>
+          <div class="card pad">
+            <div class="spread"><div class="label">Voice</div><span class="chip mono" id="voiceEngineChip">browser</span></div>
+            <div id="voiceRows" style="margin-top:8px"></div>
+            <div id="voiceConnect"></div>
           </div>
         </div>
       </div>
@@ -123,21 +165,34 @@
     <!-- 03 CUSTOMER APP -->
     <section class="view" id="view-app">
       <div class="head">
-        <div class="kicker">What the customer sees</div>
-        <h2>The same case, inside the bank app.</h2>
-        <p>The customer we interviewed said trust comes from seeing the case in the app and not having to explain again. Identity is confirmed here, never by reading a code down the phone.</p>
-      </div>
-      <div class="grid cols-2">
-        <div class="phone">
-          <div class="phone-screen" id="phoneScreen"></div>
+        <div>
+          <div class="eyebrow">03 What the customer sees</div>
+          <h2>The same case, inside the bank app.</h2>
+          <p>The customer we interviewed said trust comes from seeing the case in the app and not having to explain again. Identity is confirmed here, never by reading a code down the phone.</p>
         </div>
-        <div class="grid" style="align-content:start">
-          <div class="card pad">
-            <div class="kicker">Why this matters</div>
-            <p class="small" style="margin-top:8px">The agent asks the customer to approve a request inside the app. It never asks for a PIN, a password or a one time code, so a customer who has been taught to refuse those questions can still verify safely.</p>
-            <p class="small muted" style="margin-top:8px">The approval confirms identity only. It never moves money.</p>
+      </div>
+
+      <div class="split">
+        <div class="row" style="align-items:flex-start; gap:22px; flex-wrap:wrap">
+          <div class="phone"><div class="phone-screen" id="phoneScreen"></div></div>
+          <div class="stack" style="flex:1; min-width:260px">
+            <div class="card pad">
+              <h3>Why the approval lives here</h3>
+              <p class="small muted" style="margin:7px 0 0">The agent asks for an approval inside the app and never for a PIN, a password or a one time code. A customer who has been taught to refuse those questions can still verify safely, and the same request is visible in the app they already trust.</p>
+            </div>
+            <div class="card pad" id="appOutcome"></div>
           </div>
-          <div class="card pad" id="appOutcome"></div>
+        </div>
+
+        <div class="stack sticky">
+          <div class="card pad">
+            <div class="label" style="margin-bottom:10px">From the customer interview, Dubai, 22 September</div>
+            <div class="compare">
+              <div class="before"><div class="label">What happened to him</div>Explained the delayed salary five times, to two collectors, the complaints team, the assessor and the agency. Calls kept coming for three to four days after he complained.</div>
+              <div class="after"><div class="label">What this build does</div>He explains once. The case, the pause and the named owner appear in his app, and the agency dialer is refused from the same list.</div>
+            </div>
+            <p class="small muted" style="margin:11px 0 0">"What would make me trust it is seeing the same case in my bank app and not having to explain myself again."</p>
+          </div>
         </div>
       </div>
     </section>
@@ -145,28 +200,35 @@
     <!-- 04 EVIDENCE -->
     <section class="view" id="view-evidence">
       <div class="head">
-        <div class="kicker">After the call</div>
-        <h2>Every sentence carries its authority.</h2>
-        <p>Click any line to see the approved template, the policy version behind it and the person who approved it. Tool receipts and refusals are listed underneath.</p>
+        <div>
+          <div class="eyebrow">04 After the call</div>
+          <h2>Every sentence carries its authority.</h2>
+          <p>Click any line the agent spoke. The receipt names the approved template, the language, the policy version, the approver and the hash.</p>
+        </div>
+        <button class="btn ghost sm" id="downloadEvidence">Download evidence JSON</button>
       </div>
-      <div class="evidence">
+
+      <div class="split">
         <div class="card pad">
           <div class="spread" style="margin-bottom:10px">
-            <div class="kicker">Transcript</div>
-            <button class="btn ghost sm" id="downloadEvidence">Download evidence JSON</button>
+            <div class="label">Transcript</div>
+            <div class="row" id="evidenceCounts"></div>
           </div>
           <ul class="turnlist" id="turnList"></ul>
         </div>
-        <div class="card pad">
-          <div class="kicker">Receipt</div>
-          <div id="receiptPane" class="small muted" style="margin-top:10px">Select a line on the left.</div>
+        <div class="card pad sticky">
+          <div class="label" style="margin-bottom:10px">Receipt</div>
+          <div id="receiptPane" class="small muted">Select a line on the left.</div>
         </div>
       </div>
 
       <div class="card pad" style="margin-top:16px">
-        <div class="kicker">Tool receipts</div>
-        <table style="margin-top:8px">
-          <thead><tr><th>Tool</th><th>Node</th><th>Result</th><th>Detail</th></tr></thead>
+        <div class="spread" style="margin-bottom:6px">
+          <div class="label">Tool receipts, including refusals</div>
+          <span class="small muted">Every action and every refusal is recorded against the workflow node that asked</span>
+        </div>
+        <table>
+          <thead><tr><th style="width:24%">Tool</th><th style="width:14%">Node</th><th style="width:12%">Result</th><th>Detail</th></tr></thead>
           <tbody id="toolTable"><tr><td colspan="4" class="muted">No actions yet.</td></tr></tbody>
         </table>
       </div>
@@ -175,30 +237,51 @@
     <!-- 05 TESTS -->
     <section class="view" id="view-tests">
       <div class="head">
-        <div class="kicker">Evidence for Stage 2</div>
-        <h2>Agent tests, run three times each.</h2>
-        <p>Every scenario runs three times per language with different wording, and the conduct invariants are checked on each run: nothing about the account before verification, no secrets requested, no collection action after an escalation, and a receipt behind every regulated sentence. Reproduce with <span class="mono">npm test</span>.</p>
-      </div>
-      <div class="grid cols-2" style="margin-bottom:16px">
-        <div class="card pad">
-          <div class="kicker">Overall pass rate</div>
-          <div class="stat" style="margin-top:8px"><span class="big" id="passRate"></span><span class="muted" id="passCount"></span></div>
-          <div class="small muted" id="testMeta" style="margin-top:10px"></div>
-        </div>
-        <div class="card pad">
-          <div class="kicker">By language</div>
-          <div id="langBars" style="margin-top:10px"></div>
-          <p class="small muted" style="margin-top:10px">Reported separately, never averaged, so a weaker language cannot hide behind English.</p>
+        <div>
+          <div class="eyebrow">05 Evidence for stage 2</div>
+          <h2>Agent tests, three runs each, per language.</h2>
+          <p>Scenarios run three times with different wording, and the conduct invariants are checked on every run. Reproduce with <span class="mono">npm test</span>.</p>
         </div>
       </div>
-      <div class="card pad">
-        <div class="kicker">Scenarios</div>
-        <table style="margin-top:8px">
-          <thead><tr><th>ID</th><th>Scenario</th><th>Language</th><th>Runs</th></tr></thead>
-          <tbody id="testTable"></tbody>
-        </table>
+
+      <div class="split">
+        <div>
+          <div class="card pad">
+            <div class="spread">
+              <div>
+                <div class="label">Overall</div>
+                <div class="bigstat" style="margin-top:6px"><span class="n" id="passRate"></span><span class="muted" id="passCount"></span></div>
+              </div>
+              <div style="min-width:180px" id="langBars"></div>
+            </div>
+            <div class="small muted" id="testMeta" style="margin-top:12px"></div>
+          </div>
+          <div class="card pad">
+            <div class="label" style="margin-bottom:8px">Scenarios</div>
+            <table>
+              <thead><tr><th style="width:12%">ID</th><th>Scenario</th><th style="width:16%">Language</th><th style="width:12%">Runs</th></tr></thead>
+              <tbody id="testTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="stack sticky">
+          <div class="card pad">
+            <div class="label" style="margin-bottom:10px">Checked on every single run</div>
+            <ul class="invariants">
+              <li><span class="tick">&#10003;</span> Nothing about the obligation is said before verification</li>
+              <li><span class="tick">&#10003;</span> No PIN, password or one time code is ever requested</li>
+              <li><span class="tick">&#10003;</span> No collection action succeeds after an escalation</li>
+              <li><span class="tick">&#10003;</span> Every regulated sentence carries a receipt on an effective policy</li>
+            </ul>
+          </div>
+          <div class="card pad">
+            <div class="label" style="margin-bottom:8px">Still out of scope, and named as such</div>
+            <p class="small muted" style="margin:0">Bereavement and serious illness routing, self-harm escalation, deceased and insolvency cases, and accent bias testing. Both collections heads raised these. They belong in a pilot, designed with qualified people, not bolted onto a prototype.</p>
+          </div>
+        </div>
       </div>
-      <p class="footnote">Arabic and Urdu phrase packs are drafted for this prototype and are marked as pending review by a fluent speaker and the institution's compliance reviewer before any pilot.</p>
+      <p class="footnote">Arabic and Urdu packs are drafted for this prototype and marked pending review by a fluent speaker and the institution's compliance reviewer. No pilot runs on unreviewed regulated wording.</p>
     </section>
   </main>
 </div>
