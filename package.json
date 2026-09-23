@@ -1,0 +1,12 @@
+{
+  "name": "rifq",
+  "version": "0.1.0",
+  "description": "RIFQ: governed voice for early arrears. Browser prototype of the closed loop: stop collection, move the context, hand a named owner.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "serve": "python -m http.server 8765"
+  },
+  "license": "MIT",
+  "private": true
+}
