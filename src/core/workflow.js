@@ -43,8 +43,11 @@ export class CallSession {
   }
 
   speak(templateId, vars = {}, { prompt = true } = {}) {
-    const template = this.text(templateId);
-    const rendered = template.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : `{${k}}`));
+    const fill = (tpl) => (tpl || '').replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : `{${k}}`));
+    const rendered = fill(this.text(templateId));
+    // The same line from the English pack, used for the on-screen gloss and as a
+    // voice fallback on a device with no Arabic or Urdu voice installed.
+    const enText = this.locale === 'en-AE' ? null : fill(PACKS['en-AE'].t[templateId]);
     this.turnCount += 1;
     const receipt = utteranceReceipt({
       callId: this.callId,
@@ -56,7 +59,7 @@ export class CallSession {
       text: rendered,
       variables: vars,
     });
-    const turn = { speaker: 'agent', text: rendered, locale: this.locale, node: this.node, receipt, at: this.clock().toISOString() };
+    const turn = { speaker: 'agent', text: rendered, en_text: enText, locale: this.locale, node: this.node, receipt, at: this.clock().toISOString() };
     this.turns.push(turn);
     this.audit?.add('utterance', receipt);
     if (prompt) this.lastPrompt = { templateId, vars };
@@ -97,7 +100,7 @@ export class CallSession {
     if (PROTECTED_INTENTS.has(intent)) return this.#protect(intent, text);
     // Picking one of the dates the server offered is a structured choice, not free speech.
     if (this.awaitingDate) {
-      const picked = this.awaitingDate.find((d) => text.includes(d) || text.includes(formatDate(d)));
+      const picked = this.awaitingDate.find((d) => text.includes(d) || text.includes(formatDate(d)) || text.includes(formatDate(d, this.locale)));
       if (picked) return this.#promise(picked);
     }
     if (confidence < POLICY.confidence_floor && !forcedIntent) return this.#lowConfidence(text);
@@ -166,7 +169,7 @@ export class CallSession {
     this.speak('facts', {
       amount: `${ctx.result.currency} ${ctx.result.amount_due.toFixed(2)}`,
       product: ctx.result.product,
-      date: formatDate(ctx.result.due_date),
+      date: formatDate(ctx.result.due_date, this.locale),
     }, { prompt: false });
     this.node = 'RESOLVE';
     this.speak('options');
@@ -179,7 +182,8 @@ export class CallSession {
         const dates = this.tool('get_allowed_promise_dates', { customer_id: this.customer.id });
         if (!dates.ok) return this.#toolFailed();
         this.awaitingDate = dates.result.dates;
-        this.speak('ask_promise_date', { dates: dates.result.dates.map(formatDate).join(', ') });
+        const sep = this.locale === 'en-AE' ? ', ' : '، ';
+        this.speak('ask_promise_date', { dates: dates.result.dates.map((d) => formatDate(d, this.locale)).join(sep) });
         return this.snapshot();
       }
       case 'payment_link': {
@@ -210,7 +214,7 @@ export class CallSession {
     if (!rec.ok) return this.#toolFailed();
     this.awaitingDate = null;
     this.node = 'CONFIRM';
-    this.speak('confirm_promise', { date: formatDate(date), ref: rec.result.reference }, { prompt: false });
+    this.speak('confirm_promise', { date: formatDate(date, this.locale), ref: rec.result.reference }, { prompt: false });
     return this.#close('promise_to_pay', rec.result.reference);
   }
 
@@ -302,7 +306,9 @@ export class CallSession {
   }
 
   #close(outcome, reference) {
-    if (this.node !== 'PROTECTED') this.speak('closing', {}, { prompt: false });
+    // Some templates already end the call politely; do not say goodbye twice.
+    const alreadyClosed = ['wrong_party', 'verification_failed'].includes(outcome);
+    if (this.node !== 'PROTECTED' && !alreadyClosed) this.speak('closing', {}, { prompt: false });
     this.node = 'CLOSED';
     this.outcome = { outcome, reference: reference || null, at: this.clock().toISOString() };
     this.tool('write_audit_event', { note: `call closed with outcome ${outcome}` });
@@ -314,7 +320,7 @@ export class CallSession {
   suggestions() {
     if (this.node === 'CLOSED') return [];
     if (this.awaitingDate) {
-      return this.awaitingDate.map((d) => ({ intent: 'date', text: formatDate(d), gloss: formatDate(d), raw: d }));
+      return this.awaitingDate.map((d) => ({ intent: 'date', text: formatDate(d, this.locale), gloss: formatDate(d), raw: d }));
     }
     const short = PACKS[this.locale].short.toLowerCase();
     const key = this.node === 'DISCLOSE' || this.node === 'CONFIRM' ? 'RESOLVE' : this.node;
@@ -357,7 +363,13 @@ export function classify(text) {
   return { intent: null, confidence: 0.3 };
 }
 
-export function formatDate(iso) {
+/** Dates read naturally in each language, with Latin digits so amounts and dates match. */
+export function formatDate(iso, locale = 'en-AE') {
   const d = new Date(`${iso}T00:00:00Z`);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const tag = { 'ar-AE': 'ar-AE-u-nu-latn', 'ur-AE': 'ur-PK-u-nu-latn' }[locale] || 'en-GB';
+  try {
+    return d.toLocaleDateString(tag, { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  } catch {
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  }
 }
